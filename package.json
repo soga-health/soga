@@ -1,0 +1,61 @@
+{
+  "name": "soga-backend",
+  "version": "1.0.0",
+  "description": "Soga Healthcare MVP Backend using Payload CMS, Hedera HCS, and Twilio",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build",
+    "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev",
+    "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
+    "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
+    "lint": "cross-env NODE_OPTIONS=--no-deprecation eslint .",
+    "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
+    "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
+    "test:reminders": "cross-env NODE_OPTIONS=--no-deprecation npx tsx scripts/test-reminders.ts"
+  },
+  "dependencies": {
+    "@hashgraph/sdk": "^2.68.0",
+    "@payloadcms/db-mongodb": "^3.28.0",
+    "@payloadcms/next": "^3.28.0",
+    "@payloadcms/richtext-lexical": "^3.28.0",
+    "@payloadcms/ui": "^3.28.0",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.4.7",
+    "graphql": "^16.10.0",
+    "nanoid": "^5.1.5",
+    "next": "^15.1.0",
+    "payload": "^3.28.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "sharp": "^0.33.5",
+    "twilio": "^5.4.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.59.1",
+    "@testing-library/react": "16.3.0",
+    "@types/node": "24.12.3",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "4.5.2",
+    "eslint": "^9.16.0",
+    "eslint-config-next": "16.2.7",
+    "jsdom": "28.0.0",
+    "prettier": "^3.4.2",
+    "tsx": "4.22.4",
+    "typescript": "6.0.3",
+    "vite-tsconfig-paths": "6.0.5",
+    "vitest": "4.1.6"
+  },
+  "engines": {
+    "node": ">=24.15.0",
+    "pnpm": "^9 || ^10 || ^11"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "sharp",
+      "esbuild",
+      "unrs-resolver"
+    ]
+  }
+}
