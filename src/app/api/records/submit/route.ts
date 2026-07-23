@@ -71,7 +71,6 @@ export async function POST(req: Request) {
       message: 'Medical record encrypted and successfully submitted to Hedera HCS',
       patientId: patient.patientId,
       category,
-      topicId,
       status: submitStatus,
     })
   } catch (error: unknown) {

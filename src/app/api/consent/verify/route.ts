@@ -127,7 +127,6 @@ export async function POST(req: Request) {
       success: true,
       patientId: patient.patientId,
       category,
-      topicId: topicObj.topicId,
       recordsCount: decryptedRecords.length,
       records: decryptedRecords,
     })
