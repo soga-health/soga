@@ -54,31 +54,61 @@ export function resetHederaClient(): void {
  * Creates a new Hedera HCS Topic and returns the topic ID string (e.g., "0.0.12345")
  */
 export async function createTopic(memo?: string): Promise<string> {
-  try {
-    const client = getHederaClient()
-    let tx = new TopicCreateTransaction()
-      .setTransactionValidDuration(TRANSACTION_VALID_DURATION_SECONDS)
-    if (memo) {
-      tx = tx.setTopicMemo(memo)
+  let lastError: unknown = null
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      // Get a fresh client reference each attempt (important if the singleton
+      // was reset between iterations).
+      const client = getHederaClient()
+
+      // Build a fresh transaction each attempt so the embedded timestamp is current
+      let tx = new TopicCreateTransaction()
+        .setTransactionValidDuration(TRANSACTION_VALID_DURATION_SECONDS)
+      if (memo) {
+        tx = tx.setTopicMemo(memo)
+      }
+
+      // Explicitly freeze before execute to avoid
+      // "transaction must have been frozen before calculating the hash" errors
+      tx.freezeWith(client)
+      const response = await tx.execute(client)
+      const receipt = await response.getReceipt(client)
+      const topicId = receipt.topicId?.toString()
+
+      if (!topicId) {
+        throw new Error('Hedera topic creation succeeded but topic ID was null')
+      }
+
+      console.log(`[Hedera HCS] Created topic: ${topicId} ${memo ? `(${memo})` : ''}`)
+      return topicId
+    } catch (error: unknown) {
+      lastError = error
+      const isRetryable =
+        error instanceof Error &&
+        (error.message.includes('TRANSACTION_EXPIRED') ||
+         error.message.includes('BUSY') ||
+         error.message.includes('PLATFORM_TRANSACTION_NOT_CREATED'))
+
+      if (isRetryable && attempt < MAX_RETRIES) {
+        const delayMs = 1500 * attempt
+        console.warn(
+          `[Hedera HCS] Transient error on createTopic attempt ${attempt}/${MAX_RETRIES}: ` +
+          `${error instanceof Error ? error.message.slice(0, 80) : error}. ` +
+          `Retrying in ${delayMs}ms...`
+        )
+        await new Promise((resolve) => setTimeout(resolve, delayMs))
+        continue
+      }
+      break
     }
-
-    const response = await tx.execute(client)
-    const receipt = await response.getReceipt(client)
-    const topicId = receipt.topicId?.toString()
-
-    if (!topicId) {
-      throw new Error('Hedera topic creation succeeded but topic ID was null')
-    }
-
-    console.log(`[Hedera HCS] Created topic: ${topicId} ${memo ? `(${memo})` : ''}`)
-    return topicId
-  } catch (error) {
-    console.error('[Hedera HCS] Error creating topic:', error)
-    // Fallback mock topic ID for local dev if network call fails/mock key used
-    const mockTopicId = `0.0.mock-${Date.now()}`
-    console.log(`[Hedera HCS Fallback] Using mock topic ID: ${mockTopicId}`)
-    return mockTopicId
   }
+
+  console.error('[Hedera HCS] Error creating topic after all retries:', lastError)
+  // Fallback mock topic ID for local dev if network call fails/mock key used
+  const mockTopicId = `0.0.mock-${Date.now()}`
+  console.log(`[Hedera HCS Fallback] Using mock topic ID: ${mockTopicId}`)
+  return mockTopicId
 }
 
 /**
